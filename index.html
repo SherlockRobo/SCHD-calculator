@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCHD 动态估值与复利选股器 V2</title>
+    <title>SCHD 动态估值与复利选股器 V3</title>
     <style>
         :root {
             --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0;
@@ -52,29 +52,28 @@
 <div class="container">
     <header>
         <h1 style="margin: 0; font-size: 1.6rem; display: flex; align-items: center; justify-content: center;">
-            🎯 SCHD 动态估值与复利选股器 <span class="version-badge">V2 增长贴现版</span>
+            🎯 SCHD 动态估值与复利选股器 <span class="version-badge">V3 双轨估值版</span>
         </h1>
     </header>
 
-    <div class="section-title title-cyan">📊 市场环境模拟 & 远期目标设定</div>
+    <div class="section-title title-cyan">📊 市场环境模拟 & 预期目标设定</div>
     <div class="controls-grid market">
         <div class="control-group">
             <label>📉 模拟当前股价 ($)</label>
             <input type="number" id="in_price" value="31.9" step="0.1" oninput="calculate()">
             <input type="range" id="slide_price" min="20" max="45" value="31.9" step="0.1" oninput="sync('slide_price', 'in_price')">
         </div>
-        <div class="control-group">
-            <label>💰 你的持仓成本 ($)</label>
-            <input type="number" id="in_cost" value="31.7" step="0.1" oninput="calculate()">
-            <input type="range" id="slide_cost" min="20" max="45" value="31.7" step="0.1" oninput="sync('slide_cost', 'in_cost')">
+        <div class="control-group" style="border-right: 1px solid #333; padding-right: 15px;">
+            <label>🎯 及格线：首年税后股息 (%)</label>
+            <input type="number" id="in_target_baseline" value="3.1" step="0.1" oninput="calculate()" title="只要达到这个股息率就不亏">
         </div>
         <div class="control-group">
-            <label>⏳ 估值锚定年限 (年)</label>
-            <input type="number" id="in_anchor_years" value="5" step="1" oninput="calculate()" title="打算持有的年限基准">
+            <label>⏳ 暴击线：估值锚定年限 (年)</label>
+            <input type="number" id="in_anchor_years" value="5" step="1" oninput="calculate()">
         </div>
         <div class="control-group">
-            <label>🎯 期满目标 YOC (%)</label>
-            <input type="number" id="in_target_yoc" value="5.0" step="0.1" oninput="calculate()" title="在锚定年份希望达到的税后股息率">
+            <label>🎯 暴击线：期满目标 YOC (%)</label>
+            <input type="number" id="in_target_yoc" value="6.0" step="0.1" oninput="calculate()">
         </div>
     </div>
 
@@ -106,22 +105,22 @@
         <div class="card" style="border-top: 4px solid var(--orange);">
             <h3>内生股息增长率 (CAGR)</h3>
             <div class="metric text-orange" id="out_growth">0.0%</div>
-            <div class="metric-sub">核心引擎：直接驱动估值</div>
+            <div class="metric-sub">核心引擎：复利滚动速度</div>
         </div>
-        <div class="card" id="card_safe">
-            <h3>动态安全价 (贴现估值)</h3>
-            <div class="metric" id="out_safe">$ 0.00</div>
-            <div class="metric-sub">基于期满YOC与增长率推导</div>
+        <div class="card" id="card_fair" style="border-top: 4px solid var(--green);">
+            <h3>常态合理价 (不亏底线)</h3>
+            <div class="metric" id="out_fair">$ 0.00</div>
+            <div class="metric-sub">满足当期及格线即可买入</div>
+        </div>
+        <div class="card" id="card_deep">
+            <h3>远期贴现价 (暴击钓鱼价)</h3>
+            <div class="metric" id="out_deep">$ 0.00</div>
+            <div class="metric-sub">极端低估，达标期满目标</div>
         </div>
         <div class="card" style="border-top: 4px solid var(--cyan);">
-            <h3>模拟市价动态 PE</h3>
-            <div class="metric text-cyan" id="out_sim_pe">0.00</div>
-            <div class="metric-sub">当期税后股息: <span id="out_sim_post_yield">0.0%</span></div>
-        </div>
-        <div class="card">
-            <h3>你的持仓首年 YOC</h3>
-            <div class="metric" id="out_yoc">0.0%</div>
-            <div class="metric-sub">按持仓成本与税后计算</div>
+            <h3>当前模拟市价表现</h3>
+            <div class="metric text-cyan" id="out_sim_post_yield">0.0%</div>
+            <div class="metric-sub">当期税后股息 (PE: <span id="out_sim_pe">0.0</span>)</div>
         </div>
     </div>
 
@@ -133,22 +132,6 @@
         </div>
     </div>
 
-    <div class="section-title title-cyan" style="margin-top: 30px;">⏳ 时间复利：持仓成本股息率 (YOC) 膨胀推演</div>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>持仓阶段</th>
-                    <th>推演每股分红 (税后)</th>
-                    <th>模拟买价 YOC</th>
-                    <th>你的成本 YOC</th>
-                    <th>复利状态分析</th>
-                </tr>
-            </thead>
-            <tbody id="table_body">
-            </tbody>
-        </table>
-    </div>
 </div>
 
 <script>
@@ -165,92 +148,69 @@
         let baseYield = parseFloat(document.getElementById('in_yield').value) / 100;
         let taxRate = parseFloat(document.getElementById('in_tax').value) / 100;
 
-        // --- 市场与远期目标参数 ---
+        // --- 市场与预期目标参数 ---
         let simPrice = parseFloat(document.getElementById('in_price').value);
-        let costPrice = parseFloat(document.getElementById('in_cost').value);
+        let targetBaseline = parseFloat(document.getElementById('in_target_baseline').value) / 100; // 不亏及格线
         let anchorYears = parseFloat(document.getElementById('in_anchor_years').value);
-        let targetYoc = parseFloat(document.getElementById('in_target_yoc').value) / 100;
+        let targetYoc = parseFloat(document.getElementById('in_target_yoc').value) / 100; // 远期暴击线
 
         // --- 核心杜邦逻辑推演 ---
         let eps = refPrice / basePe;
-        let dps = refPrice * baseYield; // 当期税前分红
-
+        let dps = refPrice * baseYield; 
         let payoutRatio = basePe * baseYield;
         if(payoutRatio > 1) payoutRatio = 1;
 
         // 核心引擎：增长率
         let growthRate = baseRoe * (1 - payoutRatio);
 
-        // --- 动态安全价贴现逻辑 (V2 核心升级) ---
-        // 公式：目标年份的税后分红 = 当期税后分红 * (1 + 增长率)^年限
-        // 安全买入价 = 目标年份税后分红 / 期满目标YOC
+        // --- 双轨估值逻辑 (V3 核心升级) ---
+        // 1. 常态合理价 (只看当下，买入即达标)
+        let fairPrice = (dps * (1 - taxRate)) / targetBaseline;
+
+        // 2. 远期贴现价 (苛刻要求，暴击钓鱼)
         let futureTaxedDps = dps * (1 - taxRate) * Math.pow(1 + growthRate, anchorYears);
-        let safePrice = futureTaxedDps / targetYoc;
+        let deepSafePrice = futureTaxedDps / targetYoc;
 
         // --- 模拟市场动态数据 ---
         let simPe = simPrice / eps;
         let simPreYield = dps / simPrice;
         let simPostYield = simPreYield * (1 - taxRate);
-        let myYoc = (dps * (1 - taxRate)) / costPrice;
 
         // --- 更新顶部卡片 UI ---
         document.getElementById('out_growth').innerText = (growthRate * 100).toFixed(2) + "%";
-        document.getElementById('out_safe').innerText = "$ " + safePrice.toFixed(2);
-        document.getElementById('out_sim_pe').innerText = simPe.toFixed(2);
+        document.getElementById('out_fair').innerText = "$ " + fairPrice.toFixed(2);
+        document.getElementById('out_deep').innerText = "$ " + deepSafePrice.toFixed(2);
         document.getElementById('out_sim_post_yield').innerText = (simPostYield * 100).toFixed(2) + "%";
-        document.getElementById('out_yoc').innerText = (myYoc * 100).toFixed(2) + "%";
+        document.getElementById('out_sim_pe').innerText = simPe.toFixed(1);
 
-        // --- 红绿灯操作提示逻辑 ---
+        // --- 红绿灯操作提示逻辑 (以合理常态价为主轴) ---
         let light = document.getElementById('status_light');
         let title = document.getElementById('action_title');
         let desc = document.getElementById('action_desc');
-        let cardSafe = document.getElementById('card_safe');
+        let cardFair = document.getElementById('card_fair');
 
-        if (simPrice <= safePrice * 0.95) {
+        if (simPrice <= deepSafePrice) {
             light.style.backgroundColor = "var(--green)"; light.style.color = "var(--green)";
-            title.innerText = "🟢 极度低估：复利发动机开启";
-            desc.innerText = `当前估值极具吸引力。由于其 ${ (growthRate*100).toFixed(1) }% 的内生增长率，买入后无需等到 ${anchorYears} 年即可提前达成目标。`;
-            cardSafe.style.borderTopColor = "var(--green)";
-        } else if (simPrice <= safePrice * 1.05) {
+            light.style.boxShadow = "0 0 15px var(--green)";
+            title.innerText = "🟢 黄金坑底：砸锅卖铁，绝对暴击";
+            desc.innerText = `价格已跌穿远期贴现价。此时买入，不仅当期股息极高，${anchorYears}年后将大概率实现 ${ (targetYoc*100).toFixed(1) }% 的暴利现金流。`;
+            cardFair.style.borderTopColor = "var(--green)";
+        } else if (simPrice <= fairPrice) {
+            light.style.backgroundColor = "var(--cyan)"; light.style.color = "var(--cyan)";
+            title.innerText = "🔵 常态合理区：稳健定投，不亏即赚";
+            desc.innerText = `当前价格($${simPrice.toFixed(2)})低于及格线要求($${fairPrice.toFixed(2)})。买入即可锁定 ${(simPostYield*100).toFixed(2)}% 的首年税后股息，未来的高增长全是白送的红利。`;
+            cardFair.style.borderTopColor = "var(--cyan)";
+        } else if (simPrice <= fairPrice * 1.05) {
             light.style.backgroundColor = "var(--yellow)"; light.style.color = "var(--yellow)";
-            title.innerText = "🟡 估值中枢：合理区间的定投点";
-            desc.innerText = `价格完美贴合复利贴现模型。保持纪律买入，靠时间积累股数，${anchorYears} 年后大概率实现 ${ (targetYoc*100).toFixed(1) }% 现金流。`;
-            cardSafe.style.borderTopColor = "var(--yellow)";
+            title.innerText = "🟡 略微溢价：可观望或小额买入";
+            desc.innerText = `价格略高于你的不亏底线。首年利息微弱，需要消耗一点时间复利来填平溢价，不建议大额梭哈。`;
+            cardFair.style.borderTopColor = "var(--yellow)";
         } else {
             light.style.backgroundColor = "var(--red)"; light.style.color = "var(--red)";
-            title.innerText = "🔴 严重溢价：透支增长预期";
-            desc.innerText = `价格远高于安全线 ($${safePrice.toFixed(2)})。这意味着你为当下的 ROE 支付了过高成本，回本周期被拉得太长。`;
-            cardSafe.style.borderTopColor = "var(--red)";
+            title.innerText = "🔴 严重溢价：杀估值风险极高";
+            desc.innerText = `价格远超合理水平。当期股息率被严重稀释，建议坚决空仓，把子弹留给 00883.HK。`;
+            cardFair.style.borderTopColor = "var(--red)";
         }
-
-        // --- 底部 YOC 膨胀表格推演 ---
-        let years = [0, 1, 3, 5, 10];
-        let tbody = document.getElementById('table_body');
-        tbody.innerHTML = "";
-
-        years.forEach(year => {
-            let futureDps = dps * Math.pow(1 + growthRate, year);
-            let futurePostDps = futureDps * (1 - taxRate);
-            
-            let simYoc = futurePostDps / simPrice; 
-            let costYoc = futurePostDps / costPrice; 
-
-            let tr = document.createElement('tr');
-            if(year === 0) tr.style.backgroundColor = "rgba(0, 188, 212, 0.05)"; 
-
-            let status = "-";
-            if (costYoc >= targetYoc && year > 0) status = "✅ 达成目标现金流";
-            if (costYoc >= targetYoc * 1.5) status = "🔥 超级印钞机";
-
-            tr.innerHTML = `
-                <td>${year === 0 ? '建仓当年' : '第 ' + year + ' 年'}</td>
-                <td>$${futurePostDps.toFixed(2)}</td>
-                <td>${(simYoc * 100).toFixed(2)}%</td>
-                <td style="color: ${costYoc >= targetYoc ? 'var(--green)' : '#fff'}; font-weight: ${costYoc >= targetYoc ? 'bold' : 'normal'};">${(costYoc * 100).toFixed(2)}%</td>
-                <td style="color: #aaa; font-size: 0.9em;">${status}</td>
-            `;
-            tbody.appendChild(tr);
-        });
     }
 
     window.onload = calculate;
